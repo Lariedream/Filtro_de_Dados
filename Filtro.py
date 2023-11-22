@@ -15,7 +15,14 @@ if arquivo_presente:
             reader = csv.DictReader(file)
             dados = list(reader)
     elif extensao == "xlsx":
-        df = pd.read_excel(os.path.join("dados", nome_arquivo), engine="openpyxl")
+        df = pd.read_excel(os.path.join("dados", nome_arquivo), engine="openpyxl", dtype={
+        "Idade Minima": int,
+        "Idade Maxima": int,
+        "Taxa Minima": float,
+        "Taxa Maxima": float,
+        "Parcela Minima": float,
+        "Parcela Maxima": float
+    })
     else:
         print("extensão de arquivo não encontrado.")
 else:
@@ -25,36 +32,34 @@ idadeMinima= int(input("Digite a idade minima: "))
 
 idadeMaxima = int(input("Digite a idade maxima: "))
 
-taxaMinima = float(input("Digite a taxa minima: "))
+taxaMinima = input("Digite a taxa mínima: ")
+taxaMinima = float(re.sub("[^0-9.]", "", taxaMinima).replace(",", "."))  # Convertendo para float
 
-taxaMaxima = float(input("Digite a taxa maxima: "))
+taxaMaxima = input("Digite a taxa máxima: ")
+taxaMaxima = float(re.sub("[^0-9.]", "", taxaMaxima).replace(",", "."))  # Convertendo para float
 
 
-parcelaMinima= input("Digite o valor minimo da parcela: ")
-parcelaMinima= parcelaMinima.replace(",",".")  #trocando virgula por ponto final
-parcelaMinima= re.sub("[^0-9.]","", parcelaMinima)  #tirando qualquer caracteries especiais ou letras
+parcelaMinima = input("Digite o valor mínimo da parcela: ")
+parcelaMinima = float(re.sub("[^0-9.]", "", parcelaMinima).replace(",", "."))  # Convertendo para float
 
-parcelaMaxima= input("Digite o valor maximo da parcela: ")
-parcelaMaxima= parcelaMaxima.replace(",",".")
-parcelaMaxima= re.sub("[^0-9.]","", parcelaMaxima)
+parcelaMaxima = input("Digite o valor máximo da parcela: ")
+parcelaMaxima = float(re.sub("[^0-9.]", "", parcelaMaxima).replace(",", "."))  # Convertendo para float
 
 if extensao == "csv":
     filtro = []
     for linha in dados:
-       if int(linha["Idade Minima"]) >= idadeMinima and int(linha["Idade Maxima"]) <= idadeMaxima and float(linha["Taxa Minima"]) >= taxaMinima and float(linha["Taxa Maxima"]) <= taxaMaxima and str(linha["Parcela Minima"]) >= parcelaMinima and str(linha["Parcela Maxima"]) <= parcelaMaxima:
-        filtro.append(linha)
+        if int(linha["Idade Minima"]) >= idadeMinima and int(linha["Idade Maxima"]) <= idadeMaxima and float(linha["Taxa Minima"].replace(",", ".")) >= taxaMinima and float(linha["Taxa Maxima"].replace(",", ".")) <= taxaMaxima and float(linha["Parcela Minima"].replace(",", ".")) >= parcelaMinima and float(linha["Parcela Maxima"].replace(",", ".")) <= parcelaMaxima:
+            filtro.append(linha)
     with open("Results.csv", "w", newline="") as file: #abrindo o arquivo csv e inserindo uma linha nova no arquivo
         header= ["Idade Minima", "Idade Maxima", "Taxa Minima", "Taxa Maxima", "Parcela Minima", "Parcela Maxima"]
         writer= csv.DictWriter(file, fieldnames = header)
         writer.writeheader()
         writer.writerows(filtro)
 elif extensao == "xlsx":
-    df_resultado = pd.DataFrame(columns=["Idade Minima", "Idade Maxima", "Taxa Minima", "Taxa Maxima", "Parcela Minima", "Parcela Maxima"])
-    for linha in df.itertuples(index=False):
-        if (
-            (idadeMinima >= linha[0]) and (idadeMaxima <= linha[1]) and
-            (taxaMinima >= linha[2]) and (taxaMaxima <= linha[3]) and
-            (parcelaMinima >= linha[4]) and (parcelaMaxima <= linha[5])
-        ):
-            df_resultado = df_resultado.append(pd.Series(linha, index=df_resultado.columns), ignore_index=True)
-        df_resultado.to_excel("Results.xlsx", index=False, engine="openpyxl")
+    filtro = df[
+        (df["Idade Minima"] >= idadeMinima) & (df["Idade Maxima"] <= idadeMaxima) &
+        (df["Taxa Minima"] >= taxaMinima) & (df["Taxa Maxima"] <= taxaMaxima) &
+        (df["Parcela Minima"].replace(",", ".").astype(float) >= parcelaMinima) & 
+        (df["Parcela Maxima"].replace(",", ".").astype(float) <= parcelaMaxima)
+    ]  # Salvar os resultados no arquivo Results.csv
+    filtro.to_csv("Results.csv", index=False)
