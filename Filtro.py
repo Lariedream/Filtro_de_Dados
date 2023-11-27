@@ -16,12 +16,6 @@ if arquivo_presente:
             dados = list(reader)
     elif extensao == "xlsx":
         df = pd.read_excel(os.path.join("dados", nome_arquivo), engine="openpyxl", dtype={
-        "Idade Minima": int,
-        "Idade Maxima": int,
-        "Taxa Minima": float,
-        "Taxa Maxima": float,
-        "Parcela Minima": float,
-        "Parcela Maxima": float
     })
     else:
         print("extensão de arquivo não encontrado.")
@@ -48,18 +42,18 @@ parcelaMaxima = float(re.sub("[^0-9.]", "", parcelaMaxima).replace(",", "."))  #
 if extensao == "csv":
     filtro = []
     for linha in dados:
-        if int(linha["Idade Minima"]) >= idadeMinima and int(linha["Idade Maxima"]) <= idadeMaxima and float(linha["Taxa Minima"].replace(",", ".")) >= taxaMinima and float(linha["Taxa Maxima"].replace(",", ".")) <= taxaMaxima and float(linha["Parcela Minima"].replace(",", ".")) >= parcelaMinima and float(linha["Parcela Maxima"].replace(",", ".")) <= parcelaMaxima:
+        if int(linha["Idade"]) >= idadeMinima and int(linha["Idade"]) <= idadeMaxima and float(linha["Taxa"].replace(",", ".")) >= taxaMinima and float(linha["Taxa"].replace(",", ".")) <= taxaMaxima and float(linha["Parcela"].replace(",", ".")) >= parcelaMinima and float(linha["Parcela"].replace(",", ".")) <= parcelaMaxima:
             filtro.append(linha)
     with open("Results.csv", "w", newline="") as file: #abrindo o arquivo csv e inserindo uma linha nova no arquivo
-        header= ["Idade Minima", "Idade Maxima", "Taxa Minima", "Taxa Maxima", "Parcela Minima", "Parcela Maxima"]
+        header= ["Idade", "Taxa", "Parcela"]
         writer= csv.DictWriter(file, fieldnames = header)
         writer.writeheader()
         writer.writerows(filtro)
 elif extensao == "xlsx":
     filtro = df[
-        (df["Idade Minima"] >= idadeMinima) & (df["Idade Maxima"] <= idadeMaxima) &
-        (df["Taxa Minima"] >= taxaMinima) & (df["Taxa Maxima"] <= taxaMaxima) &
-        (df["Parcela Minima"].replace(",", ".").astype(float) >= parcelaMinima) & 
-        (df["Parcela Maxima"].replace(",", ".").astype(float) <= parcelaMaxima)
+        (df["Idade"] >= idadeMinima) & (df["Idade"] <= idadeMaxima) &
+        (df["Taxa"] >= taxaMinima) & (df["Taxa"] <= taxaMaxima) &
+        (df["Parcela"].replace(",", ".") >= parcelaMinima) & 
+        (df["Parcela"].replace(",", ".") <= parcelaMaxima)
     ]  # Salvar os resultados no arquivo Results.csv
     filtro.to_csv("Results.csv", index=False)
