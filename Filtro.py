@@ -23,7 +23,7 @@ def processar_dados():
 
         if arquivo_presente:
             nome, extensao = os.path.splitext(nome_arquivo)
-            extensao = extensao[1:]  # Remover o ponto da extensão
+            extensao = extensao[1:]  # Removendo o ponto da extensão
 
             if extensao == "csv":    
                 with open(os.path.join("dados", nome_arquivo), newline="") as file:
@@ -32,10 +32,10 @@ def processar_dados():
             elif extensao == "xlsx":
                 df = pd.read_excel(os.path.join("dados", nome_arquivo), engine="openpyxl", dtype={})
             else:
-                messagebox.showerror("Erro", "Extensão de arquivo não suportada.")
+                messagebox.showerror("Erro", "Extensão de arquivo não encontrada.")
                 return
         else:
-            messagebox.showerror("Erro", "O arquivo especificado não está presente no diretório 'dados'.")
+            messagebox.showerror("O arquivo especificado não está presente no diretório 'dados'.")
             return
 
         if extensao == "csv":
@@ -61,15 +61,15 @@ def processar_dados():
             ]
             filtro.to_csv("Results.csv", index=False)
 
-        messagebox.showinfo("Sucesso", "Dados filtrados com sucesso. Resultados salvos em Results.csv.")
+        messagebox.showinfo("Dados filtrados com sucesso. Resultados salvos em Results.csv.")
     except ValueError:
         messagebox.showerror("Erro", "Por favor, insira valores válidos.")
 
-# Crie a janela principal
+# Criei a janela principal
 janela = Tk()
 janela.title("Filtro de Dados")
 
-# Adicione widgets à janela
+# Adicionei widgets à janela
 Label(janela, text="Nome do Arquivo:").pack()
 entry_nome_arquivo = Entry(janela)
 entry_nome_arquivo.pack()
@@ -98,9 +98,7 @@ Label(janela, text="Parcela Máxima:").pack()
 entry_parcela_maxima = Entry(janela)
 entry_parcela_maxima.pack()
 
-# Utilize diretamente a função processar_dados como o comando do botão
 botao_processar = Button(janela, text="Processar Dados", command=processar_dados)
 botao_processar.pack()
 
-# Inicie o loop principal da interface gráfica
 janela.mainloop()
