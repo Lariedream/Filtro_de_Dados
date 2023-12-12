@@ -3,8 +3,7 @@ import csv
 import re
 import pandas as pd
 from tkinter import *
-from tkinter import messagebox
-
+from tkinter import filedialog, messagebox
 
 def processar_dados():
     try:
@@ -17,63 +16,73 @@ def processar_dados():
         parcela_minima = float(re.sub("[^0-9.]", "", entry_parcela_minima.get()).replace(",", "."))
         parcela_maxima = float(re.sub("[^0-9.]", "", entry_parcela_maxima.get()).replace(",", "."))
 
-        nome_arquivo = entry_nome_arquivo.get()
+        diretorio_selecionado = filedialog.askdirectory()
 
-        arquivo_presente = nome_arquivo in os.listdir("dados")
-
-        if arquivo_presente:
-            nome, extensao = os.path.splitext(nome_arquivo)
-            extensao = extensao[1:]  # Removendo o ponto da extensão
-
-            if extensao == "csv":    
-                with open(os.path.join("dados", nome_arquivo), newline="") as file:
-                    reader = csv.DictReader(file)
-                    dados = list(reader)
-            elif extensao == "xlsx":
-                df = pd.read_excel(os.path.join("dados", nome_arquivo), engine="openpyxl", dtype={})
-            else:
-                messagebox.showerror("Erro", "Extensão de arquivo não encontrada.")
-                return
-        else:
-            messagebox.showerror("O arquivo especificado não está presente no diretório 'dados'.")
+        if not diretorio_selecionado:
+            messagebox.showinfo("Aviso", "Nenhum diretório selecionado.")
             return
+        resultados = []
+        for nome_arquivo in os.listdir(diretorio_selecionado):
+            arquivo_path = os.path.join(diretorio_selecionado, nome_arquivo)
 
-        if extensao == "csv":
-            filtro = []
-            for linha in dados:
-                if (
-                    int(linha["Idade"]) >= idade_minima and int(linha["Idade"]) <= idade_maxima and
-                    float(linha["Taxa"].replace(",", ".")) >= taxa_minima and float(linha["Taxa"].replace(",", ".")) <= taxa_maxima and
-                    float(linha["Parcela"].replace(",", ".")) >= parcela_minima and float(linha["Parcela"].replace(",", ".")) <= parcela_maxima
-                ):
-                    filtro.append(linha)
+            if nome_arquivo.lower().endswith(('.csv', '.xlsx')):
+                extensao = nome_arquivo.lower().split('.')[-1]
+
+                if extensao == "csv":
+                    with open(arquivo_path, newline="", encoding="utf-8") as file:
+                        reader = csv.DictReader(file)
+                        for linha in reader:
+                            idade = int(linha["Idade"])
+                            taxa = float(linha["Taxa"].replace(",", "."))
+                            parcela = float(linha["Parcela"].replace(",", "."))
+                            
+                            # Formatação para ter dois 0
+                            linha_formatada = {
+                                "Idade": idade,
+                                "Taxa": f"{taxa:.2f}",
+                                "Parcela": f"{parcela:.2f}"
+                            }
+                            if (
+                                idade >= idade_minima and idade <= idade_maxima and
+                                taxa >= taxa_minima and taxa <= taxa_maxima and
+                                parcela >= parcela_minima and parcela <= parcela_maxima
+                            ):
+                                resultados.append(linha_formatada)
+                elif extensao == "xlsx":
+                    df = pd.read_excel(arquivo_path, engine="openpyxl", dtype={})
+                    for _, linha in df.iterrows():
+                        idade = int(linha["Idade"])
+                        taxa = float(str(linha["Taxa"]).replace(",", "."))
+                        parcela = float(str(linha["Parcela"]).replace(",", "."))
+                        
+                        # Formatação para ter dois 0
+                        linha_formatada = {
+                            "Idade": idade,
+                            "Taxa": f"{taxa:.2f}",
+                            "Parcela": f"{parcela:.2f}"
+                        }
+                        if (
+                            idade >= idade_minima and idade <= idade_maxima and
+                            taxa >= taxa_minima and taxa <= taxa_maxima and
+                            parcela >= parcela_minima and parcela <= parcela_maxima
+                        ):
+                            resultados.append(linha_formatada)
+        if not resultados:
+            messagebox.showinfo("Aviso", "Nenhum dado encontrado nos arquivos selecionados.")
+        else:
             with open("Results.csv", "w", newline="") as file:
                 header = ["Idade", "Taxa", "Parcela"]
                 writer = csv.DictWriter(file, fieldnames=header)
                 writer.writeheader()
-                writer.writerows(filtro)
-        elif extensao == "xlsx":
-            filtro = df[
-                (df["Idade"] >= idade_minima) & (df["Idade"] <= idade_maxima) &
-                (df["Taxa"] >= taxa_minima) & (df["Taxa"] <= taxa_maxima) &
-                (df["Parcela"].replace(",", ".") >= parcela_minima) &
-                (df["Parcela"].replace(",", ".") <= parcela_maxima)
-            ]
-            filtro.to_csv("Results.csv", index=False)
-
-        messagebox.showinfo("Dados filtrados com sucesso. Resultados salvos em Results.csv.")
+                writer.writerows(resultados)
+                messagebox.showinfo("Dados filtrados com sucesso. Resultados salvos em Results.csv.")
     except ValueError:
         messagebox.showerror("Erro", "Por favor, insira valores válidos.")
 
-# Criei a janela principal
 janela = Tk()
 janela.title("Filtro de Dados")
 
 # Adicionei widgets à janela
-Label(janela, text="Nome do Arquivo:").pack()
-entry_nome_arquivo = Entry(janela)
-entry_nome_arquivo.pack()
-
 Label(janela, text="Idade Mínima:").pack()
 entry_idade_minima = Entry(janela)
 entry_idade_minima.pack()
